@@ -1,8 +1,11 @@
 package remauth
 
 import (
+	"compress/gzip"
 	"crypto/md5"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -25,7 +28,7 @@ func (r *remoteAuth) Valid(token string) bool {
 	cacheKey := fmt.Sprintf("%x", md5.Sum([]byte(token)))
 
 	if valid, exists := r.cache.Get(cacheKey); exists {
-		return valid
+		return valid.(bool)
 	}
 
 	req := &http.Request{
@@ -45,7 +48,12 @@ func (r *remoteAuth) Valid(token string) bool {
 		return false
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(resp.Body)
 
 	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNoContent {
 		r.cache.Set(cacheKey, true, 5*time.Minute)
@@ -62,8 +70,8 @@ func timeTrack(start time.Time, name string) {
 	fmt.Printf("%s took %s\n", name, elapsed)
 }
 
-func New(options *Options) (*remoteAuth, error) {
-	cache := cache.New(options.CacheTime, 10*time.Minute)
+func New(options *Options) (RemoteAuth, error) {
+	ch := cache.New(options.CacheTime, 10*time.Minute)
 
 	transport := &http.Transport{
 		MaxIdleConnsPerHost: -1,
@@ -81,5 +89,69 @@ func New(options *Options) (*remoteAuth, error) {
 		return nil, err
 	}
 
-	return &remoteAuth{options: options, client: c, url: parsedUrl, cache: cache}, nil
+	return &remoteAuth{options: options, client: c, url: parsedUrl, cache: ch}, nil
+}
+
+func (r *remoteAuth) Check(token string, result func(response interface{}, err error)) {
+	if r.options.Debug {
+		defer timeTrack(time.Now(), "check method")
+	}
+
+	cacheKey := fmt.Sprintf("obj-%x", md5.Sum([]byte(token)))
+
+	if obj, exists := r.cache.Get(cacheKey); exists {
+		result(obj, nil)
+		return
+	}
+
+	req := &http.Request{
+		Method: http.MethodGet,
+		URL:    r.url,
+		Header: http.Header{
+			"User-Agent":      {"RemoteAuthClient/" + version},
+			"Authorization":   {token},
+			"Accept-Encoding": {"gzip"},
+		},
+	}
+
+	if r.options.Debug {
+		fmt.Printf("[RemoteAuthClient][URL]: %s\n", r.url.String())
+	}
+
+	resp, err := r.client.Do(req)
+	if err != nil {
+		result(nil, err)
+		return
+	}
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(resp.Body)
+
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		resp.Body, err = gzip.NewReader(resp.Body)
+		if err != nil {
+			result(nil, err)
+			return
+		}
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		result(nil, err)
+		return
+	}
+
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNoContent {
+		r.cache.Set(cacheKey, body, 5*time.Minute)
+
+		result(body, nil)
+		return
+	}
+
+	r.cache.Set(cacheKey, nil, 5*time.Minute)
+	result(nil, errors.New("invalid token"))
 }

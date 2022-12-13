@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/karmadon/remauth"
@@ -35,5 +36,17 @@ func main() {
 
 	for i := 0; i < 10; i++ {
 		remoteAuth.Valid(authHeader)
+	}
+
+	time.Sleep(1 * time.Second)
+	for i := 0; i < 10; i++ {
+		remoteAuth.Check(authHeader, func(response interface{}, err error) {
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			fmt.Printf("%#v", response)
+		})
 	}
 }

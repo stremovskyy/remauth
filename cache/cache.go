@@ -7,8 +7,8 @@ import (
 )
 
 type Cache interface {
-	Set(key string, value bool, duration time.Duration)
-	Get(key string) (bool, bool)
+	Set(key string, value interface{}, duration time.Duration)
+	Get(key string) (interface{}, bool)
 }
 
 type cache struct {
@@ -20,12 +20,12 @@ type cache struct {
 }
 
 type item struct {
-	Value      bool
+	Value      interface{}
 	Created    time.Time
 	Expiration int64
 }
 
-func New(defaultExpiration, cleanupInterval time.Duration) *cache {
+func New(defaultExpiration, cleanupInterval time.Duration) Cache {
 	items := make(map[string]item)
 
 	cache := cache{
@@ -41,7 +41,7 @@ func New(defaultExpiration, cleanupInterval time.Duration) *cache {
 	return &cache
 }
 
-func (c *cache) Set(key string, value bool, duration time.Duration) {
+func (c *cache) Set(key string, value interface{}, duration time.Duration) {
 	if c.elementsCount > math.MaxUint16 {
 		return
 	}
@@ -69,7 +69,7 @@ func (c *cache) Set(key string, value bool, duration time.Duration) {
 	c.elementsCount++
 }
 
-func (c *cache) Get(key string) (bool, bool) {
+func (c *cache) Get(key string) (interface{}, bool) {
 	c.Lock()
 	defer c.Unlock()
 
