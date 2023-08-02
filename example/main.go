@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/karmadon/remauth"
+	"github.com/stremovskyy/remauth"
 )
 
 const authHeader = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6ImY3NjJjYWE3M2ExOGYwNTAyYjVmMWMxMWNkNDllNTUy" +
@@ -16,12 +16,12 @@ const authHeader = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6ImY3NjJjY
 	"voSYMiyTuOv57oxEfpmF_HwD1uv0ckWlKv-e6MADMMmAqR7BqRmcU5ccU8mZyeoA3k0VUPYVATb7UfK03olkasRHmE7cljtJUDnOzb20DpptbeIYkx" +
 	"TB2FiuiNPE_ITL86KvuVtqA6HWf73ZYa-mlF3yfZK5tMaMIUMUXKUm0JycBeRB0GE2JevKfohz1-39GvlRBSGj2SOY9QljK41ezwgY8hj60KFNIbHFm" +
 	"pPiYctRldvnrIC-4uMxqAQ9iqCZ2zNgZH6Pd6pzksmD8JtsYgvCVsaKBjDJXDJ1JICwm5-yku_oleoSlfURcslxwzRnkg22RGgs8sbhIl6cB_yyR7o" +
-	"yvk2T5Q83aTQuX-XTiJ_08Ht9rzjvgynBQOaSJOtBCmpyeZmmGIoW-uV4kYlT8G7ZuFhXiR7pamQkVdY10o"
+	"yvk2T5Q83aTQuX-XTiJ_08Ht9rzjvgynBQOaSJOtBCmpyeZmmGIoW-uV4kYlT8G7ZuFhXiR7pamQkVdY"
 
 func main() {
 	options := &remauth.Options{
 		Debug:     true,
-		CheckUrl:  "https://example.com/client/operator/whoami",
+		CheckUrl:  "https://dev-miranda.megakit.pro/client/operator/whoami",
 		Timeout:   10,
 		CacheTime: 5 * time.Minute,
 	}

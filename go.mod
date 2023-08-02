@@ -1,3 +1,3 @@
-module github.com/karmadon/remauth
+module github.com/stremovskyy/remauth
 
 go 1.17

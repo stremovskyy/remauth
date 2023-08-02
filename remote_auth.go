@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/karmadon/remauth/cache"
+	"github.com/stremovskyy/remauth/cache"
 )
 
 type remoteAuth struct {
